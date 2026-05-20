@@ -1,0 +1,27 @@
+{
+  "name": "kids-make-games-mcp",
+  "version": "1.0.0",
+  "description": "MCP server for KidsMakeGames — content moderation, Phaser pattern retrieval, and game validation",
+  "main": "dist/index.js",
+  "bin": {
+    "kids-make-games-mcp": "dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@modelcontextprotocol/sdk": "^1.12.0",
+    "@supabase/supabase-js": "^2.49.4",
+    "dotenv": "^16.4.7",
+    "openai": "^4.77.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  }
+}

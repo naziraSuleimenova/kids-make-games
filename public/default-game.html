@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0a1a; overflow: hidden; }
+</style>
+</head>
+<body>
+<script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+<script>
+// ─── MenuScene ────────────────────────────────────────────────────────────────
+class MenuScene extends Phaser.Scene {
+  constructor() { super('MenuScene'); }
+
+  create() {
+    const W = 800, H = 600;
+
+    // Background gradient
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(0x0a0a2e, 0x0a0a2e, 0x1a0a4e, 0x1a0a4e, 1);
+    bg.fillRect(0, 0, W, H);
+
+    // Twinkling stars background
+    for (let i = 0; i < 80; i++) {
+      const s = this.add.circle(
+        Phaser.Math.Between(0, W),
+        Phaser.Math.Between(0, H * 0.75),
+        Phaser.Math.Between(1, 3),
+        0xffffff,
+        Phaser.Math.FloatBetween(0.3, 1)
+      );
+      this.tweens.add({
+        targets: s,
+        alpha: 0.1,
+        duration: Phaser.Math.Between(800, 2500),
+        yoyo: true,
+        repeat: -1,
+        delay: Phaser.Math.Between(0, 2000),
+      });
+    }
+
+    // Ground
+    this.add.rectangle(W / 2, H - 20, W, 40, 0x2d7a2d);
+    this.add.rectangle(W / 2, H - 40, W, 4, 0x44bb44);
+
+    // Title
+    this.add.text(W / 2, 130, '⭐ STAR CATCHER ⭐', {
+      fontSize: '46px', fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
+      color: '#fbbf24', stroke: '#7c3aed', strokeThickness: 6,
+    }).setOrigin(0.5);
+
+    this.add.text(W / 2, 200, 'Catch falling stars — miss 5 and it\'s over!', {
+      fontSize: '20px', fontFamily: 'Arial', color: '#c4b5fd',
+    }).setOrigin(0.5);
+
+    // Controls hint
+    this.add.text(W / 2, 270, '← → Arrow keys or A/D to move', {
+      fontSize: '18px', fontFamily: 'Arial', color: '#a78bfa',
+    }).setOrigin(0.5);
+
+    // Play button
+    const btn = this.add.text(W / 2, 370, '▶  PLAY  ▶', {
+      fontSize: '32px', fontFamily: 'Arial Black', fontStyle: 'bold',
+      color: '#ffffff', backgroundColor: '#7c3aed',
+      padding: { x: 30, y: 14 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    this.tweens.add({ targets: btn, scaleX: 1.05, scaleY: 1.05, duration: 600, yoyo: true, repeat: -1 });
+    btn.on('pointerover', () => btn.setStyle({ backgroundColor: '#6d28d9' }));
+    btn.on('pointerout', () => btn.setStyle({ backgroundColor: '#7c3aed' }));
+    btn.on('pointerdown', () => this.scene.start('GameScene'));
+    this.input.keyboard.once('keydown-SPACE', () => this.scene.start('GameScene'));
+
+    this.add.text(W / 2, 480, 'Press SPACE to start', {
+      fontSize: '16px', fontFamily: 'Arial', color: '#6d5bad',
+    }).setOrigin(0.5);
+  }
+}
+
+// ─── GameScene ────────────────────────────────────────────────────────────────
+class GameScene extends Phaser.Scene {
+  constructor() { super('GameScene'); }
+
+  preload() {
+    // Player bucket
+    const pg = this.make.graphics({ add: false });
+    pg.fillStyle(0xec4899);
+    pg.fillRect(4, 0, 56, 8);
+    pg.fillStyle(0xdb2777);
+    pg.fillRect(0, 8, 64, 32);
+    pg.fillStyle(0xec4899);
+    pg.fillRect(0, 8, 64, 4);
+    pg.generateTexture('bucket', 64, 40);
+    pg.destroy();
+
+    // Star
+    const sg = this.make.graphics({ add: false });
+    const cx = 20, cy = 20, r1 = 18, r2 = 8, pts = 5;
+    sg.fillStyle(0xfbbf24);
+    sg.beginPath();
+    for (let i = 0; i < pts * 2; i++) {
+      const angle = (i * Math.PI) / pts - Math.PI / 2;
+      const r = i % 2 === 0 ? r1 : r2;
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      i === 0 ? sg.moveTo(x, y) : sg.lineTo(x, y);
+    }
+    sg.closePath();
+    sg.fillPath();
+    sg.generateTexture('star', 40, 40);
+    sg.destroy();
+
+    // Miss indicator (red X)
+    const xg = this.make.graphics({ add: false });
+    xg.fillStyle(0xef4444);
+    xg.fillCircle(16, 16, 14);
+    xg.lineStyle(3, 0xffffff);
+    xg.beginPath(); xg.moveTo(8, 8); xg.lineTo(24, 24); xg.strokePath();
+    xg.beginPath(); xg.moveTo(24, 8); xg.lineTo(8, 24); xg.strokePath();
+    xg.generateTexture('miss', 32, 32);
+    xg.destroy();
+  }
+
+  create() {
+    this.W = 800; this.H = 600;
+    this.score = 0;
+    this.misses = 0;
+    this.maxMisses = 5;
+
+    // Background
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(0x0a0a2e, 0x0a0a2e, 0x0f172a, 0x0f172a, 1);
+    bg.fillRect(0, 0, this.W, this.H);
+
+    // Stars in BG
+    for (let i = 0; i < 60; i++) {
+      const s = this.add.circle(
+        Phaser.Math.Between(0, this.W),
+        Phaser.Math.Between(0, this.H * 0.8),
+        Phaser.Math.Between(1, 2), 0xffffff, Phaser.Math.FloatBetween(0.2, 0.7)
+      );
+      this.tweens.add({ targets: s, alpha: 0.05, duration: Phaser.Math.Between(1000, 3000), yoyo: true, repeat: -1 });
+    }
+
+    // Ground
+    this.add.rectangle(this.W / 2, this.H - 16, this.W, 32, 0x1e3a1e);
+    this.add.rectangle(this.W / 2, this.H - 30, this.W, 4, 0x2d7a2d);
+
+    // Player
+    this.player = this.physics.add.sprite(this.W / 2, this.H - 55, 'bucket');
+    this.player.setCollideWorldBounds(true);
+    this.player.body.setAllowGravity(false);
+
+    // Stars group
+    this.stars = this.physics.add.group();
+
+    // Overlap: catch star
+    this.physics.add.overlap(this.player, this.stars, this.catchStar, null, this);
+
+    // Score text
+    this.scoreText = this.add.text(16, 16, 'Score: 0', {
+      fontSize: '22px', fontFamily: 'Arial Black', color: '#fbbf24',
+      stroke: '#000', strokeThickness: 4,
+    });
+
+    // Miss indicators (hearts / lives)
+    this.missIcons = [];
+    for (let i = 0; i < this.maxMisses; i++) {
+      this.missIcons.push(
+        this.add.text(this.W - 30 - i * 36, 16, '❤️', { fontSize: '22px' })
+      );
+    }
+
+    // Controls hint
+    this.add.text(this.W / 2, this.H - 8, '← → or A/D to move', {
+      fontSize: '13px', fontFamily: 'Arial', color: '#4b5563',
+    }).setOrigin(0.5, 1);
+
+    // Input
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.wasd = this.input.keyboard.addKeys({ left: Phaser.Input.Keyboard.KeyCodes.A, right: Phaser.Input.Keyboard.KeyCodes.D });
+
+    // Spawn timer — speeds up with score
+    this.spawnDelay = 1200;
+    this.spawnTimer = this.time.addEvent({
+      delay: this.spawnDelay,
+      callback: this.spawnStar,
+      callbackScope: this,
+      loop: true,
+    });
+
+    // Speed-up timer
+    this.time.addEvent({
+      delay: 8000,
+      callback: () => {
+        this.spawnDelay = Math.max(400, this.spawnDelay - 120);
+        this.spawnTimer.delay = this.spawnDelay;
+      },
+      loop: true,
+    });
+  }
+
+  spawnStar() {
+    const x = Phaser.Math.Between(30, this.W - 30);
+    const star = this.stars.create(x, -20, 'star');
+    star.body.setAllowGravity(false);
+    star.setVelocityY(Phaser.Math.Between(130, 220 + this.score * 2));
+
+    // Rotate while falling
+    this.tweens.add({ targets: star, angle: 360, duration: 1500, repeat: -1 });
+  }
+
+  catchStar(player, star) {
+    // Burst effect
+    const burst = this.add.text(star.x, star.y, '+1 ⭐', {
+      fontSize: '20px', fontFamily: 'Arial Black', color: '#fbbf24',
+      stroke: '#000', strokeThickness: 3,
+    }).setOrigin(0.5);
+    this.tweens.add({
+      targets: burst, y: burst.y - 60, alpha: 0, duration: 700,
+      onComplete: () => burst.destroy(),
+    });
+
+    star.destroy();
+    this.score++;
+    this.scoreText.setText('Score: ' + this.score);
+
+    // Flash player
+    this.tweens.add({ targets: this.player, scaleX: 1.3, scaleY: 1.3, duration: 80, yoyo: true });
+
+    if (this.score >= 30) {
+      this.scene.start('EndScene', { score: this.score, won: true });
+    }
+  }
+
+  update() {
+    const speed = 380;
+    this.player.setVelocityX(0);
+
+    if (this.cursors.left.isDown || this.wasd.left.isDown) {
+      this.player.setVelocityX(-speed);
+    } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
+      this.player.setVelocityX(speed);
+    }
+
+    // Check for stars that fell past the bottom
+    this.stars.getChildren().forEach(star => {
+      if (star.y > this.H + 30) {
+        star.destroy();
+        this.misses++;
+
+        // Update miss indicators
+        const idx = this.maxMisses - this.misses;
+        if (idx >= 0 && this.missIcons[idx]) {
+          this.missIcons[idx].setText('🖤');
+        }
+
+        // Shake camera
+        this.cameras.main.shake(200, 0.008);
+
+        if (this.misses >= this.maxMisses) {
+          this.scene.start('EndScene', { score: this.score, won: false });
+        }
+      }
+    });
+  }
+}
+
+// ─── EndScene ─────────────────────────────────────────────────────────────────
+class EndScene extends Phaser.Scene {
+  constructor() { super('EndScene'); }
+
+  create(data) {
+    const W = 800, H = 600;
+    const won = data.won;
+
+    // Background
+    const bg = this.add.graphics();
+    bg.fillGradientStyle(
+      won ? 0x0f2e0a : 0x2e0a0a,
+      won ? 0x0f2e0a : 0x2e0a0a,
+      won ? 0x0a1a06 : 0x1a0606,
+      won ? 0x0a1a06 : 0x1a0606, 1
+    );
+    bg.fillRect(0, 0, W, H);
+
+    // Confetti / particles for win
+    if (won) {
+      const colors = [0xfbbf24, 0xec4899, 0x818cf8, 0x34d399, 0xf87171];
+      for (let i = 0; i < 40; i++) {
+        const c = this.add.rectangle(
+          Phaser.Math.Between(0, W), Phaser.Math.Between(-100, 0),
+          Phaser.Math.Between(6, 14), Phaser.Math.Between(6, 14),
+          colors[Math.floor(Math.random() * colors.length)]
+        );
+        this.tweens.add({
+          targets: c,
+          y: H + 50,
+          x: c.x + Phaser.Math.Between(-60, 60),
+          angle: Phaser.Math.Between(0, 720),
+          duration: Phaser.Math.Between(1500, 3500),
+          delay: Phaser.Math.Between(0, 1500),
+          repeat: -1,
+        });
+      }
+    }
+
+    // Main message
+    this.add.text(W / 2, 160, won ? '🎉 YOU WIN! 🎉' : '😢 GAME OVER', {
+      fontSize: won ? '58px' : '52px',
+      fontFamily: 'Arial Black, Arial', fontStyle: 'bold',
+      color: won ? '#fbbf24' : '#f87171',
+      stroke: '#000', strokeThickness: 6,
+    }).setOrigin(0.5);
+
+    // Score
+    this.add.text(W / 2, 265, `Stars caught: ${data.score}`, {
+      fontSize: '30px', fontFamily: 'Arial', fontStyle: 'bold',
+      color: '#e2e8f0', stroke: '#000', strokeThickness: 3,
+    }).setOrigin(0.5);
+
+    // Sub message
+    this.add.text(W / 2, 320, won ? 'Amazing catch! You got all 30 stars!' : 'So close! Try again!', {
+      fontSize: '20px', fontFamily: 'Arial', color: '#94a3b8',
+    }).setOrigin(0.5);
+
+    // Play again button
+    const btn = this.add.text(W / 2, 420, '▶  Play Again  ▶', {
+      fontSize: '28px', fontFamily: 'Arial Black', fontStyle: 'bold',
+      color: '#ffffff',
+      backgroundColor: won ? '#059669' : '#7c3aed',
+      padding: { x: 28, y: 14 },
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    this.tweens.add({ targets: btn, scaleX: 1.04, scaleY: 1.04, duration: 700, yoyo: true, repeat: -1 });
+    btn.on('pointerover', () => btn.setStyle({ backgroundColor: won ? '#047857' : '#6d28d9' }));
+    btn.on('pointerout', () => btn.setStyle({ backgroundColor: won ? '#059669' : '#7c3aed' }));
+    btn.on('pointerdown', () => this.scene.start('MenuScene'));
+    this.input.keyboard.once('keydown-SPACE', () => this.scene.start('MenuScene'));
+
+    this.add.text(W / 2, 500, 'Press SPACE to restart', {
+      fontSize: '15px', fontFamily: 'Arial', color: '#475569',
+    }).setOrigin(0.5);
+  }
+}
+
+// ─── Game Config ──────────────────────────────────────────────────────────────
+new Phaser.Game({
+  type: Phaser.AUTO,
+  width: 800,
+  height: 600,
+  backgroundColor: '#0a0a1a',
+  physics: {
+    default: 'arcade',
+    arcade: { gravity: { y: 0 }, debug: false },
+  },
+  scene: [MenuScene, GameScene, EndScene],
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "kids-make-games-evals",
+  "version": "1.0.0",
+  "description": "Evaluation runner for KidsMakeGames",
+  "scripts": {
+    "eval": "tsx run-evals.ts",
+    "eval:quick": "tsx run-evals.ts --quick",
+    "eval:ab-only": "tsx run-evals.ts --ab-only"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "dotenv": "^16.4.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.1",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3"
+  }
+}

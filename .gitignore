@@ -1,0 +1,29 @@
+# Environment — never commit secrets
+.env
+.env.local
+.env.*.local
+mcp/.env
+
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build output
+dist/
+.next/
+out/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Eval results (large JSON, regenerate locally)
+evals/results-*.json
+
+# Puppeteer cache
+.local-chromium/
