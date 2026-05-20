@@ -11,7 +11,7 @@ KidsMakeGames generates Phaser 3 browser games from natural language prompts. We
 
 ## Golden Dataset
 
-**Total entries:** 5 evaluated (3 categories excluded from generation: reject, sanitizable)
+**Total entries:** 28 evaluatable (33 total — 3 reject + 2 sanitizable excluded from generation). Last quick run scored 5 entries; full run scores all 28.
 **Full dataset:** [evals/golden-dataset.json](evals/golden-dataset.json) — 33 entries across 7 categories:
 
 | Category | Count | Description |
@@ -67,7 +67,7 @@ KidsMakeGames generates Phaser 3 browser games from natural language prompts. We
 | Validity Rate | 100.0% | 100.0% |
 | Avg Playability | 2.33/5 | 2.50/5 |
 
-**Conclusion:** Temperature 1.0 (Variant B) performs comparably or better. Creative variation does not significantly increase failure rate. We use **temperature=0.7** in production as the default.
+**Conclusion:** Both variants achieve 100% validity — the production system prompt is robust enough that temperature has no measurable effect on structural correctness. We choose **temperature=0.7** in production for more deterministic, reproducible output.
 
 ## Performance
 
@@ -78,8 +78,8 @@ Average generation time: **79.5s** per game (Claude Sonnet 4.6, streaming, 32K m
 ```bash
 cd evals
 npm install
-npx tsx run-evals.ts          # Full run (~5 games, ~7 min)
-npx tsx run-evals.ts --quick  # First 5 entries only
+npx tsx run-evals.ts          # Full run (~28 games, ~44 min)
+npx tsx run-evals.ts --quick  # First 5 entries only (~7 min)
 npx tsx run-evals.ts --ab-only  # Skip LLM scoring (faster)
 npx tsx run-evals.ts --category simple  # One category only
 ```

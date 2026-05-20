@@ -54,7 +54,8 @@ Run `supabase/schema.sql` in the Supabase SQL editor. This creates the `games`, 
 cd backend
 cp .env.example .env   # fill in all values (see below)
 npm install
-npm run ingest         # one-time: scrapes Phaser docs and populates pgvector
+npm run ingest:curated  # one-time: inserts curated Phaser patterns into pgvector (reliable)
+# npm run ingest       # alternative: also scrapes phaser.io docs (may time out)
 npm run dev            # starts on http://localhost:3001
 ```
 
@@ -102,8 +103,8 @@ LANGCHAIN_PROJECT=KidsMakeGames
 ```bash
 cd evals
 npm install
-npx tsx run-evals.ts --quick    # 5 games, ~5 min
-npx tsx run-evals.ts            # full 30-game run, ~30 min, ~$4 in API costs
+npx tsx run-evals.ts --quick    # 5 games, ~7 min
+npx tsx run-evals.ts            # full 28-game run, ~44 min, ~$4 in API costs
 ```
 
 Outputs `EVALS.md` with validity rate, playability scores, and A/B experiment results.
@@ -116,7 +117,7 @@ Outputs `EVALS.md` with validity rate, playability scores, and A/B experiment re
 |---|---|
 | `cd backend && npm run dev` | Start backend (port 3001) |
 | `cd frontend && npm run dev` | Start frontend (port 3000) |
-| `cd backend && npm run ingest` | Ingest Phaser docs into pgvector (run once) |
+| `cd backend && npm run ingest:curated` | Insert curated Phaser patterns into pgvector (reliable, run once) |
 | `cd mcp && npm run dev` | Start MCP server over stdio |
 | `cd evals && npx tsx run-evals.ts` | Run evaluation suite |
 
