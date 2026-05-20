@@ -523,7 +523,7 @@ ${Object.entries(m.byCategory).map(([cat, s]) => `| ${cat} | ${s.valid} | ${s.to
 
 ## Performance
 
-Average generation time: **${m.avgTime}s** per game (Claude Sonnet 4.6, streaming, 16K max tokens)
+Average generation time: **${m.avgTime}s** per game (Claude Sonnet 4.6, streaming, 32K max tokens)
 
 ## How to Run Evals
 
