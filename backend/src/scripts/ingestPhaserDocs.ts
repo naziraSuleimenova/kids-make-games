@@ -335,6 +335,7 @@ async function embedBatch(texts: string[]): Promise<number[][]> {
 // ── Main ──────────────────────────────────────────────────────────────────────
 
 async function main() {
+  const curatedOnly = process.argv.includes('--curated-only');
   console.log('=== Phaser 3 docs ingestion ===\n');
 
   // 1. Collect chunks
@@ -342,10 +343,14 @@ async function main() {
     ...CURATED,
   ];
 
-  console.log('Scraping Phaser 3 API docs...');
-  for (const { url, topic } of SOURCES) {
-    const scraped = await scrapeUrl(url, topic);
-    chunks.push(...scraped);
+  if (curatedOnly) {
+    console.log(`Skipping web scraping (--curated-only). Using ${CURATED.length} curated patterns.`);
+  } else {
+    console.log('Scraping Phaser 3 API docs...');
+    for (const { url, topic } of SOURCES) {
+      const scraped = await scrapeUrl(url, topic);
+      chunks.push(...scraped);
+    }
   }
   console.log(`\nTotal chunks: ${chunks.length}`);
 

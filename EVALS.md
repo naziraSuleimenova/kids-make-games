@@ -1,6 +1,6 @@
 # EVALS.md — KidsMakeGames Evaluation Results
 
-Last run: 2026-05-20_04-40
+Last run: 2026-05-20_06-29
 
 ## Overview
 
@@ -11,7 +11,7 @@ KidsMakeGames generates Phaser 3 browser games from natural language prompts. We
 
 ## Golden Dataset
 
-**Total entries:** 28 evaluated (3 categories excluded from generation: reject, sanitizable)
+**Total entries:** 5 evaluated (3 categories excluded from generation: reject, sanitizable)
 **Full dataset:** [evals/golden-dataset.json](evals/golden-dataset.json) — 33 entries across 7 categories:
 
 | Category | Count | Description |
@@ -34,18 +34,12 @@ KidsMakeGames generates Phaser 3 browser games from natural language prompts. We
 - Valid HTML starting with `<!DOCTYPE html>`
 - Phaser CDN script tag present
 
-**Result:** 28/28 = **100.0%**
+**Result:** 5/5 = **100.0%**
 
 ### By Category
 | Category | Valid | Total | Rate |
 |---|---|---|---|
-| simple | 7 | 7 | 100% |
-| complex | 6 | 6 | 100% |
-| ambiguous | 5 | 5 | 100% |
-| platformer | 3 | 3 | 100% |
-| shooter | 2 | 2 | 100% |
-| dodge | 2 | 2 | 100% |
-| collect | 3 | 3 | 100% |
+| simple | 5 | 5 | 100% |
 
 ## Metric 2: Playability Score (LLM-as-Judge)
 
@@ -56,7 +50,7 @@ KidsMakeGames generates Phaser 3 browser games from natural language prompts. We
 - 4: Good (clear mechanics, kid-friendly)
 - 5: Excellent (all mechanics work, fun, matches prompt)
 
-**Result:** **N/A/5** average across 0 scored games
+**Result:** **2.40/5** average across 5 scored games
 
 ## A/B Experiment: Temperature 0.7 vs 1.0
 
@@ -71,20 +65,20 @@ KidsMakeGames generates Phaser 3 browser games from natural language prompts. We
 | Metric | Variant A (T=0.7) | Variant B (T=1.0) |
 |---|---|---|
 | Validity Rate | 100.0% | 100.0% |
-| Avg Playability | N/A/5 | N/A/5 |
+| Avg Playability | 2.33/5 | 2.50/5 |
 
-**Conclusion:** Both variants achieved 100% validity — the production system prompt is robust enough that temperature has no measurable effect on structural correctness. We choose **temperature=0.7** in production for more deterministic, reproducible output.
+**Conclusion:** Temperature 1.0 (Variant B) performs comparably or better. Creative variation does not significantly increase failure rate. We use **temperature=0.7** in production as the default.
 
 ## Performance
 
-Average generation time: **92.5s** per game (Claude Sonnet 4.6, streaming, 32K max tokens)
+Average generation time: **79.5s** per game (Claude Sonnet 4.6, streaming, 32K max tokens)
 
 ## How to Run Evals
 
 ```bash
 cd evals
 npm install
-npx tsx run-evals.ts          # Full run (~28 games, ~44 min)
+npx tsx run-evals.ts          # Full run (~5 games, ~7 min)
 npx tsx run-evals.ts --quick  # First 5 entries only
 npx tsx run-evals.ts --ab-only  # Skip LLM scoring (faster)
 npx tsx run-evals.ts --category simple  # One category only

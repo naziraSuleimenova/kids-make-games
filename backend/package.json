@@ -6,7 +6,8 @@
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "ingest": "tsx src/scripts/ingestPhaserDocs.ts"
+    "ingest": "tsx src/scripts/ingestPhaserDocs.ts",
+    "ingest:curated": "tsx src/scripts/ingestPhaserDocs.ts --curated-only"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.52.0",
